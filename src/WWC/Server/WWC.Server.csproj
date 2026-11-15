@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- WWC (Wet Works Company) server mod: The Jackal, his quests, the tees, wall flags, patches and the Slickster in one DLL.
+       It is built from the parts' own source files (linked, not copied), compiled with WWC defined: each part then skips its own
+       ModMetadata and reads its files from its folder inside this mod (Parts.Dir). The parts' standalone builds are unchanged.
+       Build: dotnet build -c Release (references the installed 4.1.6 server DLLs read-only).
+       Set -p:WithJobs=false to leave WWC Jobs out. -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>WWC.Server</AssemblyName>
+    <RootNamespace>WWC.Server</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OutputType>Library</OutputType>
+    <LangVersion>latest</LangVersion>
+    <ModAuthor>Widowz</ModAuthor>
+    <Version>1.2.2</Version>
+    <DefineConstants>$(DefineConstants);WWC</DefineConstants>
+    <WithJobs Condition="'$(WithJobs)' == ''">true</WithJobs>
+    <DefineConstants Condition="'$(WithJobs)' == 'true'">$(DefineConstants);WWC_JOBS</DefineConstants>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <SptRuntimeDir Condition="'$(SptRuntimeDir)' == ''">D:\SPT\SPT_Runtime\</SptRuntimeDir>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+  <!-- Forge build (dotnet build -p:Forge=true): GUID com.widowz.wwc, name WWC, version 2.0.0, to match the single client plugin. -->
+  <PropertyGroup Condition="'$(Forge)' == 'true'">
+    <DefineConstants>$(DefineConstants);WWC_FORGE</DefineConstants>
+    <Version>2.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="SPTarkov.Common"><HintPath>$(SptRuntimeDir)SPTarkov.Common.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="SPTarkov.DI"><HintPath>$(SptRuntimeDir)SPTarkov.DI.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="SPTarkov.Server.Core"><HintPath>$(SptRuntimeDir)SPTarkov.Server.Core.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="SPTarkov.Reflection"><HintPath>$(SptRuntimeDir)SPTarkov.Reflection.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="SemanticVersioning"><HintPath>$(SptRuntimeDir)SemanticVersioning.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="0Harmony"><HintPath>$(SptRuntimeDir)0Harmony.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- WWC's own code: metadata (guid local.jackal), part folders, part bundles, old-mod guard -->
+    <Compile Include="*.cs" />
+    <!-- The Jackal (trader, stock, 12 contracts) -->
+    <Compile Include="..\..\Jackal\Server\*.cs" Link="Parts\Jackal\%(Filename)%(Extension)" />
+    <!-- Jackal Origin (3 Fence quests, portrait, Pier Boat) -->
+    <Compile Include="..\..\JackalOrigin\Server\*.cs" Link="Parts\Origin\%(Filename)%(Extension)" />
+    <!-- Tees and the Black Division quests -->
+    <Compile Include="..\..\JackalTee\Server\*.cs" Link="Parts\Tees\%(Filename)%(Extension)" />
+    <!-- Wall flags -->
+    <Compile Include="..\..\WallFlag\Server\*.cs" Link="Parts\Flags\%(Filename)%(Extension)" />
+    <!-- Patches and the patch wall -->
+    <Compile Include="..\..\JackalPatches\Server\*.cs" Link="Parts\Patches\%(Filename)%(Extension)" />
+    <!-- Slickster carrier -->
+    <Compile Include="..\..\Slickster\Server\*.cs" Link="Parts\Slickster\%(Filename)%(Extension)" />
+    <!-- WWC Jobs (every WWC line's job chain) -->
+    <Compile Include="..\..\WWCJobs\Server\*.cs" Link="Parts\Jobs\%(Filename)%(Extension)" Condition="'$(WithJobs)' == 'true'" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,61 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- WWC client plugin (BepInEx 5, SPT 4.1.6 / EFT 40743): the patches, wall flag and Slickster client code in one DLL.
+       Built from the parts' own Plugin.cs files (linked, not copied) with WWC defined; each keeps its own BepInPlugin id and Harmony id,
+       so their hooks, ordering (Patches runs after the Slickster on item creation) and logs are as before. Everything they read sits in
+       BepInEx\plugins\WWC (patches\, shared\, wear_*.png, slickster.bundle, content-ready.json); settings come from the server mod's part folders.
+       References the installed game's DLLs read-only (never copied). -->
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <AssemblyName>WWC.Client</AssemblyName>
+    <RootNamespace>WWC.Client</RootNamespace>
+    <Version>1.2.0</Version>
+    <DefineConstants>$(DefineConstants);WWC</DefineConstants>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <Deterministic>true</Deterministic>
+    <SptRoot Condition="'$(SptRoot)' == ''">D:\SPT</SptRoot>
+    <ManagedDirectory>$(SptRoot)\EscapeFromTarkov_Data\Managed</ManagedDirectory>
+    <!-- The wall flag code was written with nullable off (it built for net472); its warnings are noise here. CS0618: obsolete game APIs it already used. -->
+    <NoWarn>$(NoWarn);CS0618;CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8625;CS8632</NoWarn>
+  </PropertyGroup>
+
+  <!-- Forge build (dotnet build -p:Forge=true): one BepInPlugin (ForgePlugin, com.widowz.wwc) that starts the three parts, version 2.0.0.
+       The default build keeps the three plugins and their old GUIDs for the installs other local mods depend on. -->
+  <PropertyGroup Condition="'$(Forge)' == 'true'">
+    <DefineConstants>$(DefineConstants);WWC_FORGE</DefineConstants>
+    <Version>2.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp" HintPath="$(ManagedDirectory)\Assembly-CSharp.dll" Private="false" />
+    <Reference Include="Comfort" HintPath="$(ManagedDirectory)\Comfort.dll" Private="false" />
+    <Reference Include="CommonExtensions" HintPath="$(ManagedDirectory)\CommonExtensions.dll" Private="false" />
+    <Reference Include="Sirenix.Serialization" HintPath="$(ManagedDirectory)\Sirenix.Serialization.dll" Private="false" />
+    <Reference Include="DissonanceVoip" HintPath="$(ManagedDirectory)\DissonanceVoip.dll" Private="false" Condition="Exists('$(ManagedDirectory)\DissonanceVoip.dll')" />
+    <Reference Include="ItemComponent.Types" HintPath="$(ManagedDirectory)\ItemComponent.Types.dll" Private="false" />
+    <Reference Include="UnityEngine" HintPath="$(ManagedDirectory)\UnityEngine.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(ManagedDirectory)\UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="UnityEngine.AssetBundleModule" HintPath="$(ManagedDirectory)\UnityEngine.AssetBundleModule.dll" Private="false" />
+    <Reference Include="UnityEngine.AnimationModule" HintPath="$(ManagedDirectory)\UnityEngine.AnimationModule.dll" Private="false" />
+    <Reference Include="UnityEngine.ImageConversionModule" HintPath="$(ManagedDirectory)\UnityEngine.ImageConversionModule.dll" Private="false" />
+    <Reference Include="UnityEngine.PhysicsModule" HintPath="$(ManagedDirectory)\UnityEngine.PhysicsModule.dll" Private="false" />
+    <Reference Include="Newtonsoft.Json" HintPath="$(ManagedDirectory)\Newtonsoft.Json.dll" Private="false" />
+    <Reference Include="BepInEx" HintPath="$(SptRoot)\BepInEx\core\BepInEx.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="$(SptRoot)\BepInEx\core\0Harmony.dll" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\JackalPatches\Client\*.cs" Link="Parts\Patches\%(Filename)%(Extension)" />
+    <Compile Include="..\..\WallFlag\Client\*.cs" Link="Parts\Flags\%(Filename)%(Extension)" />
+    <Compile Include="..\..\Slickster\Client\*.cs" Link="Parts\Slickster\%(Filename)%(Extension)" />
+    <Compile Include="ForgePlugin.cs" />
+  </ItemGroup>
+
+</Project>
