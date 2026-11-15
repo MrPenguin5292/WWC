@@ -19,7 +19,7 @@ public sealed record WwcMetadata : IModMetadata
 {
 #if WWC_FORGE
     // Forge build: the Forge wants one GUID shared by the server mod, the client plugin and the Forge entry, and a plain name.
-    public string ModGuid { get; init; } = "com.widowz.wwc";
+    public string ModGuid { get; init; } = "com.mrpenguin5292.wwc";
     public string Name { get; init; } = "WWC";
     public string Author { get; init; } = "Widowz";
     public List<string>? Contributors { get; init; }

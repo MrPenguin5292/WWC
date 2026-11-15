@@ -12,8 +12,8 @@ namespace WWC.Client;
 [BepInPlugin(Guid, Name, Version)]
 public sealed class ForgePlugin : BaseUnityPlugin
 {
-    public const string Guid = "com.widowz.wwc";
-    public const string Name = "Widowz-WWC";
+    public const string Guid = "com.mrpenguin5292.wwc";
+    public const string Name = "MrPenguin5292-WWC";
     public const string Version = "2.0.0";
 
     /// <summary>The DLL's location, which the parts use to find their files next to it.</summary>

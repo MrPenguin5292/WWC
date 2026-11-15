@@ -28,7 +28,7 @@
     <Deterministic>true</Deterministic>
   </PropertyGroup>
 
-  <!-- Forge build (dotnet build -p:Forge=true): GUID com.widowz.wwc, name WWC, version 2.0.0, to match the single client plugin. -->
+  <!-- Forge build (dotnet build -p:Forge=true): GUID com.mrpenguin5292.wwc, name WWC, version 2.0.0, to match the single client plugin. -->
   <PropertyGroup Condition="'$(Forge)' == 'true'">
     <DefineConstants>$(DefineConstants);WWC_FORGE</DefineConstants>
     <Version>2.0.0</Version>
