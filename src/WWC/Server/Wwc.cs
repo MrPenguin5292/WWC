@@ -23,7 +23,7 @@ public sealed record WwcMetadata : IModMetadata
     public string Name { get; init; } = "WWC";
     public string Author { get; init; } = "Widowz";
     public List<string>? Contributors { get; init; }
-    public SemanticVersioning.Version Version { get; init; } = new("2.1.0");
+    public SemanticVersioning.Version Version { get; init; } = new("2.1.1");
 #else
     public string ModGuid { get; init; } = "local.jackal";
     public string Name { get; init; } = "WWC - Wet Works Company";
@@ -95,7 +95,7 @@ public sealed class OldModGuard(ISptLogger<OldModGuard> logger) : IOnLoad
             + ", Jobs"
 #endif
 #if WWC_FORGE
-            + ", Mags, Wraps, Armbands, Gun Displays, Helmet Displays, Gun Case, Patch Case, FTHS, USMC PC, JPC, AirLite, Avon mask, Grunts, Zyn tins, Vape, RC bomb car"
+            + ", Mags, Wraps, Armbands, Gun Displays, Helmet Displays, Gun Case, Patch Case, FTHS, ARC V2, JPC, AirLite, Avon mask, Grunts, Zyn tins, Vape, RC bomb car"
 #endif
             + (Parts.ClientPresent ? "" : $"; client plugin missing ({@"BepInEx\plugins\" + Parts.ClientFolder + @"\" + Parts.ClientDll}), so nothing that needs it is sold or placed"));
         return Task.CompletedTask;

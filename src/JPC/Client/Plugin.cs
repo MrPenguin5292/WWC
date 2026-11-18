@@ -28,7 +28,7 @@ namespace JPC.Client;
 // Forge build: one BepInPlugin for all of WWC (WWC.Client.ForgePlugin) adds this part as a component.
 public sealed class Plugin : MonoBehaviour
 #else
-[BepInPlugin(Id, "JPC Plate Carrier", "0.3.1")]
+[BepInPlugin(Id, "JPC Plate Carrier", "0.3.2")]
 public sealed class Plugin : BaseUnityPlugin
 #endif
 {
@@ -104,6 +104,12 @@ public sealed class Plugin : BaseUnityPlugin
             instance = null;
             Logger.LogError("JPC visuals unavailable; the native donor appearance remains. " + error);
         }
+    }
+
+    // Own rig layout (RigLayout.cs, shared with the ARC V2 and the other carrier): applied once the item templates are loaded, again whenever the item factory is replaced.
+    private void Update()
+    {
+        if (instance != null) RigLayout.Tick(Logger);
     }
 
     /// <summary>

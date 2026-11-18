@@ -14,13 +14,13 @@ public record ModMetadata : IModMetadata
 {
     public string ModGuid { get; init; } = "local.usmcpc.server";
 
-    public string Name { get; init; } = "USMC Plate Carrier Gen III";
+    public string Name { get; init; } = "Shaw Concepts ARC V2";
 
     public string Author { get; init; } = "Widowz";
 
     public List<string>? Contributors { get; init; }
 
-    public SemanticVersioning.Version Version { get; init; } = new("0.3.0");
+    public SemanticVersioning.Version Version { get; init; } = new("0.3.2");
 
     // Minimum must match the referenced SPT package (4.1.3) and covers 4.1.6.
     public SemanticVersioning.Range SptVersion { get; init; } = new("~4.1.3");

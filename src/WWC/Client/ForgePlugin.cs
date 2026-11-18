@@ -24,7 +24,7 @@ public sealed class ForgePlugin : BaseUnityPlugin
 {
     public const string Guid = "com.mrpenguin5292.wwc";
     public const string Name = "MrPenguin5292-WWC";
-    public const string Version = "2.1.0";
+    public const string Version = "2.1.1";
 
     /// <summary>The DLL's location, which the original parts use to find their files next to it.</summary>
     internal static PartInfo Part { get; private set; } = new(string.Empty);
@@ -61,7 +61,7 @@ public sealed class ForgePlugin : BaseUnityPlugin
         go.AddComponent<ZynTin.Client.Plugin>();
         // every part's config file in WWC's own F12 entry, next to the parts' game-side settings
         WWC.Client.Settings.SettingsCore.Bind(Config, Logger);
-        Logger.LogInfo($"{Name} {Version}: patches, Slickster, wall flags, mags, wraps, armbands, gun and helmet displays, gun case, patch case, FTHS, USMC PC, JPC, AirLite, Avon mask, Grunts, Zyn tins, vape and RC bomb car started");
+        Logger.LogInfo($"{Name} {Version}: patches, Slickster, wall flags, mags, wraps, armbands, gun and helmet displays, gun case, patch case, FTHS, ARC V2, JPC, AirLite, Avon mask, Grunts, Zyn tins, vape and RC bomb car started");
     }
 }
 

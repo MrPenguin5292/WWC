@@ -11,7 +11,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>WWC.BigBrain</AssemblyName>
     <RootNamespace>WWC.BigBrain</RootNamespace>
-    <Version>2.1.0</Version>
+    <Version>2.1.1</Version>
     <DefineConstants>$(DefineConstants);WWC;WWC_FORGE</DefineConstants>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <OutputPath>bin\$(Configuration)\</OutputPath>

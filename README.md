@@ -2,7 +2,7 @@
 
 Source code for the WWC mod for SPT 4.1.6 (EFT 0.16.9.5.40743): The Jackal trader and his quests, the crew tees, wall flags, patches
 and the patch wall, the Ferro Concepts Slickster carrier, and since 2.1 the WWC mags, wraps and Raid Tape, an armband, gun and helmet
-displays, the gun case and patch case, the FTHS helmets, the USMC Plate Carrier Gen III, the Crye JPC, the USMC AirLite, the Avon M50,
+displays, the gun case and patch case, the FTHS helmets, the Shaw Concepts ARC V2, the Crye JPC, the USMC AirLite, the Avon M50,
 the Grunts, the nicotine pouch tins, the Dymok vape and the RC bomb car. One server mod and one client plugin.
 
 The download with the mod's data, models and textures is on the Forge page. This repository holds the code the two DLLs in that
@@ -30,7 +30,7 @@ dotnet build src/WWC/Client/WWC.Client.csproj -c Release -p:Forge=true -p:SptRoo
 dotnet build src/WWC/BigBrain/WWC.BigBrain.csproj -c Release -p:Forge=true -p:SptRoot="C:\path\to\SPT"
 ```
 
-`-p:Forge=true` gives the release build: mod GUID `com.mrpenguin5292.wwc`, one BepInEx plugin, version 2.1.0. The DLLs land in each
+`-p:Forge=true` gives the release build: mod GUID `com.mrpenguin5292.wwc`, one BepInEx plugin, version 2.1.1. The DLLs land in each
 project's `bin\Release` folder. Put `WWC.Server.dll` in `SPT_Runtime\user\mods\Widowz-WWC.Server`, and `WWC.Client.dll` and
 `WWC.BigBrain.dll` in `BepInEx\plugins\WWC`, next to the data from the download.
 

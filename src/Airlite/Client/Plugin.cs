@@ -27,7 +27,7 @@ namespace Airlite.Client;
 // Forge build: one BepInPlugin for all of WWC (WWC.Client.ForgePlugin) adds this part as a component.
 public sealed class Plugin : MonoBehaviour
 #else
-[BepInPlugin(Id, "USMC AirLite", "0.3.2")]
+[BepInPlugin(Id, "USMC AirLite", "0.4.0")]
 public sealed class Plugin : BaseUnityPlugin
 #endif
 {
@@ -42,6 +42,13 @@ public sealed class Plugin : BaseUnityPlugin
     private AssetBundle bundle = null!;
     internal Bindings binding = null!;
     private readonly Dictionary<string, PartData[]> parts = new();
+    // 0.4.0 (Widowz 2026-11-18 "Is there going to be a armor mesh ver and non armor mesh ver", it floated when worn without armor): the
+    // bundle carries a second fit of every part, snug to the shirt (tools/build_fitted.py --over_armor=0). A worn rig whose wearer has no
+    // body armor draws that fit; with armor, and anywhere it is not worn (stash, loot, icons, inspect), it draws the over-armor fit. Mesh
+    // and spot keys of the no-armor fit carry this prefix. Missing or broken no-armor data: the over-armor fit everywhere, as before.
+    internal const string NoArmorPrefix = "noarmor/";
+    private readonly Dictionary<string, PartData[]> partsNoArmor = new();
+    internal bool noArmorReady;
     private readonly Dictionary<(Material, string), Material> materials = new();
     private readonly Dictionary<string, Mesh> displayMeshes = new();
     private readonly HashSet<string> errors = new();
@@ -79,6 +86,7 @@ public sealed class Plugin : BaseUnityPlugin
             }
             foreach (var row in binding.items.Values) foreach (var p in row.parts) if (!parts.ContainsKey(p)) throw new InvalidDataException("Item part missing: " + p);
             LoadSpots(Path.GetDirectoryName(Info.Location)!);
+            LoadNoArmorFit(Path.GetDirectoryName(Info.Location)!);
             foreach (var s in binding.slots.Values) ourSlots.Add(s);
             instance = this;
             harmony = new Harmony(Id);
@@ -104,6 +112,12 @@ public sealed class Plugin : BaseUnityPlugin
             instance = null;
             Logger.LogError("USMC AirLite visuals unavailable; the native donor appearance remains. " + error);
         }
+    }
+
+    // Own rig layout (RigLayout.cs, shared with the ARC V2 and the other carrier): applied once the item templates are loaded, again whenever the item factory is replaced.
+    private void Update()
+    {
+        if (instance != null) RigLayout.Tick(Logger);
     }
 
     /// <summary>
@@ -238,16 +252,21 @@ public sealed class Plugin : BaseUnityPlugin
         // itself), so the wearer's face cover slot is found through the body the model hangs on, once it is parented (AirliteVisualState
         // looks every half second until found, then watches that slot).
         state.FindFace = () => model != null ? model.GetComponentInParent<PlayerBody>()?.Equipment?.GetSlot(EquipmentSlot.FaceCover) : null;
+        // 0.4.0: the wearer's body armor slot, found the same way; no armor on -> the no-armor fit
+        state.FindArmor = () => model != null ? model.GetComponentInParent<PlayerBody>()?.Equipment?.GetSlot(EquipmentSlot.ArmorVest) : null;
         void Refresh()
         {
             if (model == null || dress == null) return;
             var fitted = FittedParts(slots, out var kitPatch, out string patchPoint);
             var mask = state.Face?.ContainedItem;
             if (mask != null && binding.yokeHiddenBy.Contains(mask.StringTemplateId)) fitted.Remove("yoke");
+            bool noArmor = noArmorReady && state.Armor != null && state.Armor.ContainedItem == null;
+            var keys = noArmor ? fitted.Select(p => NoArmorPrefix + p).ToList() : fitted;
+            if (noArmor && patchPoint.Length > 0) patchPoint = NoArmorPrefix + patchPoint;
             foreach (var r in skins)
             {
                 if (r == null) continue;
-                var mesh = state.Use(r, fitted, IsLod1(r.name) ? 1 : 0);
+                var mesh = state.Use(r, keys, IsLod1(r.name) ? 1 : 0);
                 r.sharedMesh = mesh;
                 r.sharedMaterials = MaterialsFor(donor, mesh);
                 r.localBounds = mesh.bounds;
@@ -255,7 +274,7 @@ public sealed class Plugin : BaseUnityPlugin
             foreach (var f in filters)
             {
                 if (f == null) continue;
-                var mesh = state.Use(f, fitted, IsLod1(f.name) ? 1 : 0);
+                var mesh = state.Use(f, keys, IsLod1(f.name) ? 1 : 0);
                 f.sharedMesh = mesh;
                 f.GetComponent<MeshRenderer>().sharedMaterials = MaterialsFor(donor, mesh);
             }
@@ -263,6 +282,7 @@ public sealed class Plugin : BaseUnityPlugin
             state.ShowKitPatch("front", kitPatch, patchPoint, mainSkin, mainLoot, donor);
             state.ShowKitPatch("back", BackPatch(slots), backSpot, mainSkin, mainLoot, donor);
             state.Fitted = string.Join(",", fitted);
+            state.Fit = noArmor ? "noarmor" : "armor";
         }
         state.RefreshVisuals = Refresh;
         Refresh();
@@ -307,7 +327,7 @@ public sealed class Plugin : BaseUnityPlugin
     /// <summary>One mesh for a set of parts: vertices copied part after part, triangles grouped by material (one submesh per material).</summary>
     internal Mesh Build(List<string> keys, int lod)
     {
-        var datas = keys.Select(k => parts[k][lod]).ToArray();
+        var datas = keys.Select(k => Part(k)[lod]).ToArray();
         int total = datas.Sum(d => d.Vertices.Length);
         var v = new Vector3[total]; var n = new Vector3[total]; var t = new Vector4[total]; var uv = new Vector2[total]; var bw = new BoneWeight[total];
         var tris = new Dictionary<string, List<int>>();
@@ -462,6 +482,65 @@ public sealed class Plugin : BaseUnityPlugin
         }
     }
 
+    /// <summary>The no-armor fit: its part meshes (same keys and materials as the over-armor fit) and its patch spots, under NoArmorPrefix.
+    /// Any problem leaves noArmorReady false and the over-armor fit is drawn everywhere.</summary>
+    private void LoadNoArmorFit(string folder)
+    {
+        try
+        {
+            var na = binding.noArmor;
+            if (na == null || na.parts.Count == 0) { Logger.LogInfo("No-armor fit: not in this bundle; the over-armor fit is drawn everywhere."); return; }
+            foreach (var pair in binding.parts)
+            {
+                if (!na.parts.TryGetValue(pair.Key, out var row)) throw new InvalidDataException("no-armor part missing: " + pair.Key);
+                if (!row.materials.SequenceEqual(pair.Value.materials)) throw new InvalidDataException("no-armor materials differ: " + pair.Key);
+                var lods = new PartData[2];
+                for (int lod = 0; lod < 2; lod++)
+                {
+                    var mesh = Load<Mesh>(row.lods[lod.ToString()].mesh);
+                    if (!mesh.isReadable) throw new InvalidDataException("no-armor mesh is not readable: " + mesh.name);
+                    if (mesh.subMeshCount != row.materials.Length) throw new InvalidDataException("no-armor submesh count differs: " + mesh.name);
+                    lods[lod] = new PartData(mesh, row.materials);
+                }
+                partsNoArmor[pair.Key] = lods;
+            }
+            // spots: the bundle's no-armor patch points, then patch_spots_noarmor.json (draped) over them, all under the prefix
+            var own = new Dictionary<string, DrawSpot>();
+            foreach (var pair in na.patchPoints)
+            {
+                var p = pair.Value;
+                na.patchFields.TryGetValue(pair.Key, out var f);
+                own[pair.Key] = new DrawSpot
+                {
+                    Centre = p.V(p.centre), Normal = p.V(p.normal).normalized, Up = p.V(p.up).normalized, Right = p.V(p.right).normalized,
+                    Back = p.back, HalfW = p.halfW, Top = p.top, Bottom = p.bottom, Drape = false,
+                    Field = f == null ? null : new SpotField { cell = f.cell, halfW = f.halfW, halfH = f.halfH, nx = f.nx, ny = f.ny, heights = f.heights, boneIndices = f.boneIndices, boneWeights = f.boneWeights },
+                    Weight = new BoneWeight
+                    {
+                        boneIndex0 = p.boneIndices[0], boneIndex1 = p.boneIndices[1], boneIndex2 = p.boneIndices[2], boneIndex3 = p.boneIndices[3],
+                        weight0 = p.boneWeights[0], weight1 = p.boneWeights[1], weight2 = p.boneWeights[2], weight3 = p.boneWeights[3],
+                    },
+                };
+            }
+            PatchDraw.LoadSpots(folder, own, text => Logger.LogInfo("No-armor fit: " + text), "patch_spots_noarmor.json");
+            foreach (var pair in own) spots[NoArmorPrefix + pair.Key] = pair.Value;
+            foreach (var p in binding.patchPointByFront.Values) if (!own.ContainsKey(p)) throw new InvalidDataException("no-armor patch spot missing: " + p);
+            noArmorReady = true;
+            Logger.LogInfo($"No-armor fit ready: {partsNoArmor.Count} parts, {own.Count} patch spots; drawn when the wearer has no body armor.");
+        }
+        catch (Exception error)
+        {
+            partsNoArmor.Clear();
+            foreach (var key in spots.Keys.Where(k => k.StartsWith(NoArmorPrefix, StringComparison.Ordinal)).ToList()) spots.Remove(key);
+            noArmorReady = false;
+            Logger.LogWarning("No-armor fit unavailable; the over-armor fit is drawn everywhere. " + error.Message);
+        }
+    }
+
+    /// <summary>A part's meshes by key; keys with NoArmorPrefix come from the no-armor fit.</summary>
+    private PartData[] Part(string key) =>
+        key.StartsWith(NoArmorPrefix, StringComparison.Ordinal) ? partsNoArmor[key.Substring(NoArmorPrefix.Length)] : parts[key];
+
     /// <summary>The patch in the back slot (0.3.0, from patch_spots.json); null without that file or with the slot empty.</summary>
     internal Item? BackPatch(Dictionary<string, Slot> slots) =>
         backSpot.Length > 0 && binding.slots.TryGetValue("patch_back", out var name) && slots.TryGetValue(name, out var s) ? s.ContainedItem : null;
@@ -586,6 +665,14 @@ public sealed class Plugin : BaseUnityPlugin
         public HashSet<string> yokeHiddenBy = new();
         public string barePatchPoint = "patch_bare";
         public float[][] bindBase = Array.Empty<float[]>();
+        public Dictionary<string, PatchField> patchFields = new();
+        /// <summary>0.4.0: the no-armor fit (tools/make_items.py 5th argument); null in older bundles.</summary>
+        public NoArmorFit? noArmor;
+    }
+    public sealed class NoArmorFit
+    {
+        public Dictionary<string, PartRow> parts = new();
+        public Dictionary<string, PatchPoint> patchPoints = new();
         public Dictionary<string, PatchField> patchFields = new();
     }
     /// <summary>Surface height along a patch point's normal (metres from its centre) on a grid in its (wearer's right, up) plane.</summary>
@@ -713,6 +800,12 @@ public sealed class AirliteVisualState : MonoBehaviour
     internal Slot? Face { get; private set; }
     private Action<Item>? faceChanged;
     private float nextFace;
+    /// <summary>0.4.0: "armor" (over-armor fit) or "noarmor" (snug fit, the wearer has no body armor); read by the QA probes.</summary>
+    public string Fit { get; internal set; } = "";
+    internal Func<Slot?>? FindArmor;
+    internal Slot? Armor { get; private set; }
+    private Action<Item>? armorChanged;
+    private float nextArmor;
 
     internal Mesh Use(UnityEngine.Object owner, List<string> parts, int lod)
     {
@@ -793,6 +886,7 @@ public sealed class AirliteVisualState : MonoBehaviour
     private void LateUpdate()
     {
         WatchFace();
+        WatchArmor();
         if (kits.Count == 0) return;
         bool bones = Time.unscaledTime >= nextBones;
         if (bones) nextBones = Time.unscaledTime + 0.5f;
@@ -832,6 +926,27 @@ public sealed class AirliteVisualState : MonoBehaviour
         Face = null; faceChanged = null; FindFace = null; nextFace = 0f;
     }
 
+    // The wearer's body armor slot, looked for every half second until the rig hangs on a body, then watched: putting armor on or taking it
+    // off redraws the rig with the other fit. Until found (stash, loot, icons) the rig keeps the over-armor fit.
+    private void WatchArmor()
+    {
+        if (Armor != null || FindArmor == null || Time.unscaledTime < nextArmor) return;
+        nextArmor = Time.unscaledTime + 0.5f;
+        Slot? slot = null;
+        try { slot = FindArmor(); } catch { }
+        if (slot == null) return;
+        Armor = slot;
+        armorChanged = _ => { try { RefreshVisuals?.Invoke(); } catch (Exception error) { Plugin.instance?.ReportOnce("refresh", error); } };
+        slot.OnAddOrRemoveItem += armorChanged;
+        try { RefreshVisuals?.Invoke(); } catch (Exception error) { Plugin.instance?.ReportOnce("refresh", error); }
+    }
+
+    private void StopArmor()
+    {
+        if (Armor != null && armorChanged != null) Armor.OnAddOrRemoveItem -= armorChanged;
+        Armor = null; armorChanged = null; FindArmor = null; nextArmor = 0f;
+    }
+
     public void Remember(Renderer renderer, MeshFilter? filter)
     {
         var skinned = renderer as SkinnedMeshRenderer;
@@ -865,6 +980,8 @@ public sealed class AirliteVisualState : MonoBehaviour
     public void Restore()
     {
         StopFace();
+        StopArmor();
+        Fit = "";
         RefreshVisuals = null;
         ClearKit();
         for (int i = restore.Count - 1; i >= 0; i--)

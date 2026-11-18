@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,7 +16,7 @@ using UnityEngine;
 namespace USMCPC.Client;
 
 /// <summary>
-/// USMC Plate Carrier Gen III visuals. The carrier clones the Eagle MMAC's stats but uses the Tasmanian Tiger SK prefab (the Slickster
+/// Shaw Concepts ARC V2 visuals (called "USMC Plate Carrier Gen III" until 2026-11-18). The carrier clones the Eagle MMAC's stats but uses the Tasmanian Tiger SK prefab (the Slickster
 /// pipeline's donor), so the donor supplies dress, loot model and behaviour. Every part (fronts, side pouches, phone mount, radio, patch)
 /// is a readable skinned mesh in the donor's bind space; the client copies the parts fitted in the carrier's slots into one mesh per
 /// carrier and LOD (cached by combination, so bots with the same kit share it). A patch (kit-made or one of the Slickster's own four) in
@@ -27,7 +27,7 @@ namespace USMCPC.Client;
 // Forge build: one BepInPlugin for all of WWC (WWC.Client.ForgePlugin) adds this part as a component.
 public sealed class Plugin : MonoBehaviour
 #else
-[BepInPlugin(Id, "USMC Plate Carrier Gen III", "0.3.1")]
+[BepInPlugin(Id, "Shaw Concepts ARC V2", "0.3.2")]
 public sealed class Plugin : BaseUnityPlugin
 #endif
 {
@@ -91,14 +91,20 @@ public sealed class Plugin : BaseUnityPlugin
             SeedSlotIcons();
             harmony.Patch(AccessTools.Method(typeof(IconsHash), nameof(IconsHash.GetItemHash)), postfix: new HarmonyMethod(typeof(Plugin), nameof(AfterIconHash)));
             harmony.Patch(AccessTools.Method(typeof(ItemIconCreator), "RenderModel"), prefix: new HarmonyMethod(typeof(Plugin), nameof(BeforeRenderIcon)), postfix: new HarmonyMethod(typeof(Plugin), nameof(AfterRenderIcon)));
-            Logger.LogInfo($"USMC PC Gen III ready: {parts.Count} parts, {binding.items.Count} part items, {binding.materials.Count} materials.");
+            Logger.LogInfo($"Shaw Concepts ARC V2 ready: {parts.Count} parts, {binding.items.Count} part items, {binding.materials.Count} materials.");
         }
         catch (Exception error)
         {
             harmony?.UnpatchSelf();
             instance = null;
-            Logger.LogError("USMC PC Gen III visuals unavailable; the native donor appearance remains. " + error);
+            Logger.LogError("Shaw Concepts ARC V2 visuals unavailable; the native donor appearance remains. " + error);
         }
+    }
+
+    // Own rig layout (RigLayout.cs): applied once the item templates are loaded, again whenever the item factory is replaced.
+    private void Update()
+    {
+        if (instance != null) RigLayout.Tick(Logger);
     }
 
     /// <summary>
@@ -195,7 +201,7 @@ public sealed class Plugin : BaseUnityPlugin
 
     internal void ReportOnce(string key, Exception error)
     {
-        if (errors.Add(key)) Logger.LogError($"USMC PC Gen III: {key}: {error}");
+        if (errors.Add(key)) Logger.LogError($"Shaw Concepts ARC V2: {key}: {error}");
     }
 
     internal void LogInfo(string text) => Logger.LogInfo(text);

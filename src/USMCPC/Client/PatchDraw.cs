@@ -115,9 +115,9 @@ internal static class PatchDraw
 
     /// <summary>Reads patch_spots.json and lays its spots over the bundle's (same names replace, new names add). Null when the file is
     /// missing or unreadable; the bundle's spots then stay as they are.</summary>
-    public static SpotFile? LoadSpots(string folder, Dictionary<string, DrawSpot> spots, Action<string> log)
+    public static SpotFile? LoadSpots(string folder, Dictionary<string, DrawSpot> spots, Action<string> log, string fileName = "patch_spots.json")
     {
-        var path = Path.Combine(folder, "patch_spots.json");
+        var path = Path.Combine(folder, fileName);   // the AirLite's no-armor fit reads patch_spots_noarmor.json (2026-11-18)
         if (!File.Exists(path)) { log("patch_spots.json not found: patches use the spots in the bundle (no back patch)"); return null; }
         try
         {
