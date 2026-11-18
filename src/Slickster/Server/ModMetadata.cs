@@ -28,7 +28,7 @@ public record ModMetadata : IModMetadata
 
     public string? Url { get; init; }
 
-    // Private local port; original asset ownership retained by the source authors. Not for publication.
+    // The standalone build's own licence. Built into WWC (its public build), WWC's metadata and LICENSE apply instead.
     public string License { get; init; } = "Private";
 
     public bool HasPrepatcher { get; init; } = false;

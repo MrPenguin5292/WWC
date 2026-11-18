@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using SPTarkov.Common.Models.Logging;
 using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
@@ -23,7 +23,7 @@ public sealed record WwcMetadata : IModMetadata
     public string Name { get; init; } = "WWC";
     public string Author { get; init; } = "Widowz";
     public List<string>? Contributors { get; init; }
-    public SemanticVersioning.Version Version { get; init; } = new("2.0.1");
+    public SemanticVersioning.Version Version { get; init; } = new("2.1.0");
 #else
     public string ModGuid { get; init; } = "local.jackal";
     public string Name { get; init; } = "WWC - Wet Works Company";
@@ -47,6 +47,16 @@ public sealed record WwcMetadata : IModMetadata
 public static class Parts
 {
     public const string Jackal = "Jackal", Origin = "Origin", Tees = "Tees", Flags = "Flags", Patches = "Patches", Slickster = "Slickster", Jobs = "Jobs";
+#if WWC_FORGE
+    // Forge build 2.1: the lines folded in from their own mods. Each keeps its old mod folder's files in a folder of this name, here and
+    // under BepInEx\plugins\WWC (ClientPart), and its ids, load stages and config file names.
+    public const string Mags = "Mags", Wraps = "Wraps", Armbands = "Armbands", GunDisplays = "GunDisplays", HelmetDisplays = "HelmetDisplays",
+        GunCase = "GunCase", PatchCase = "PatchCase", FTHS = "FTHS", USMCPC = "USMCPC", JPC = "JPC", AirLite = "AirLite", AvonMask = "AvonMask",
+        Grunts = "Grunts", ZynTin = "ZynTin", Vape = "Vape", RCBombCar = "RCBombCar";
+
+    /// <summary>A folded-in line's client files: BepInEx\plugins\WWC\&lt;part&gt;.</summary>
+    public static string ClientPart(string part) => Path.Combine(ClientDir, part);
+#endif
     public const string ServerFolder = "Widowz-WWC.Server";
     public const string ClientFolder = "WWC";
     public const string ClientDll = "WWC.Client.dll";
@@ -83,6 +93,9 @@ public sealed class OldModGuard(ISptLogger<OldModGuard> logger) : IOnLoad
         logger.Info($"[WWC] WWC - Wet Works Company {typeof(WwcMetadata).Assembly.GetName().Version}: The Jackal, Origin, Tees, Flags, Patches, Slickster"
 #if WWC_JOBS
             + ", Jobs"
+#endif
+#if WWC_FORGE
+            + ", Mags, Wraps, Armbands, Gun Displays, Helmet Displays, Gun Case, Patch Case, FTHS, USMC PC, JPC, AirLite, Avon mask, Grunts, Zyn tins, Vape, RC bomb car"
 #endif
             + (Parts.ClientPresent ? "" : $"; client plugin missing ({@"BepInEx\plugins\" + Parts.ClientFolder + @"\" + Parts.ClientDll}), so nothing that needs it is sold or placed"));
         return Task.CompletedTask;

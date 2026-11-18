@@ -26,11 +26,11 @@
     <NoWarn>$(NoWarn);CS0618;CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8625;CS8632</NoWarn>
   </PropertyGroup>
 
-  <!-- Forge build (dotnet build -p:Forge=true): one BepInPlugin (ForgePlugin, com.mrpenguin5292.wwc) that starts the three parts, version 2.0.1.
+  <!-- Forge build (dotnet build -p:Forge=true): one BepInPlugin (ForgePlugin, com.mrpenguin5292.wwc) that starts the three parts, version 2.1.0.
        The default build keeps the three plugins and their old GUIDs for the installs other local mods depend on. -->
   <PropertyGroup Condition="'$(Forge)' == 'true'">
     <DefineConstants>$(DefineConstants);WWC_FORGE</DefineConstants>
-    <Version>2.0.1</Version>
+    <Version>2.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -56,6 +56,39 @@
     <Compile Include="..\..\WallFlag\Client\*.cs" Link="Parts\Flags\%(Filename)%(Extension)" />
     <Compile Include="..\..\Slickster\Client\*.cs" Link="Parts\Slickster\%(Filename)%(Extension)" />
     <Compile Include="ForgePlugin.cs" />
+    <Compile Include="ForgeSettings.cs" />
+    <Compile Include="Jsonc.cs" />
+  </ItemGroup>
+
+  <!-- Forge build 2.1: the folded-in lines' client code. Each reads its files from BepInEx\plugins\WWC\<part> (ForgePlugin.PartAt).
+       BigBrain (DrakiaXYZ) is a soft dependency of the RC bomb car: without it the car still works, bots only hear it. Its bot layer
+       (RCBombCar\Client\BotLayer.cs, the only file naming BigBrain types) is built into WWC.BigBrain.dll (..\BigBrain), not into this DLL. -->
+  <ItemGroup Condition="'$(Forge)' == 'true'">
+    <Reference Include="Comfort.Unity" HintPath="$(ManagedDirectory)\Comfort.Unity.dll" Private="false" />
+    <Reference Include="UnityEngine.AIModule" HintPath="$(ManagedDirectory)\UnityEngine.AIModule.dll" Private="false" />
+    <Reference Include="UnityEngine.AudioModule" HintPath="$(ManagedDirectory)\UnityEngine.AudioModule.dll" Private="false" />
+    <Reference Include="UnityEngine.IMGUIModule" HintPath="$(ManagedDirectory)\UnityEngine.IMGUIModule.dll" Private="false" />
+    <Reference Include="UnityEngine.ParticleSystemModule" HintPath="$(ManagedDirectory)\UnityEngine.ParticleSystemModule.dll" Private="false" />
+    <Reference Include="UnityEngine.TextRenderingModule" HintPath="$(ManagedDirectory)\UnityEngine.TextRenderingModule.dll" Private="false" />
+    <Reference Include="UnityEngine.UI" HintPath="$(ManagedDirectory)\UnityEngine.UI.dll" Private="false" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Forge)' == 'true'">
+    <Compile Include="..\..\WWCMags\Client\*.cs" Link="Parts\Mags\%(Filename)%(Extension)" />
+    <Compile Include="..\..\WWCWraps\Client\*.cs" Link="Parts\Wraps\%(Filename)%(Extension)" />
+    <Compile Include="..\..\JackalArmbands\Client\*.cs" Link="Parts\Armbands\%(Filename)%(Extension)" />
+    <Compile Include="..\..\WWCGunDisplays\Client\*.cs" Link="Parts\GunDisplays\%(Filename)%(Extension)" />
+    <Compile Include="..\..\WWCHelmetDisplays\Client\*.cs" Link="Parts\HelmetDisplays\%(Filename)%(Extension)" />
+    <Compile Include="..\..\JackalGunCase\Client\*.cs" Link="Parts\GunCase\%(Filename)%(Extension)" />
+    <Compile Include="..\..\JackalPatchCase\Client\*.cs" Link="Parts\PatchCase\%(Filename)%(Extension)" />
+    <Compile Include="..\..\FTHS\Client\*.cs" Link="Parts\FTHS\%(Filename)%(Extension)" />
+    <Compile Include="..\..\USMCPC\Client\*.cs" Link="Parts\USMCPC\%(Filename)%(Extension)" />
+    <Compile Include="..\..\JPC\Client\*.cs" Link="Parts\JPC\%(Filename)%(Extension)" />
+    <Compile Include="..\..\Airlite\Client\*.cs" Link="Parts\AirLite\%(Filename)%(Extension)" />
+    <Compile Include="..\..\AvonMask\Client\*.cs" Link="Parts\AvonMask\%(Filename)%(Extension)" />
+    <Compile Include="..\..\Grunts\Client\*.cs" Link="Parts\Grunts\%(Filename)%(Extension)" />
+    <Compile Include="..\..\ZynTin\Client\*.cs" Link="Parts\ZynTin\%(Filename)%(Extension)" />
+    <Compile Include="..\..\Vape\Client\*.cs" Link="Parts\Vape\%(Filename)%(Extension)" />
+    <Compile Include="..\..\RCBombCar\Client\*.cs" Exclude="..\..\RCBombCar\Client\BotLayer.cs" Link="Parts\RCBombCar\%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

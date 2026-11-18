@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- WWC Forge build 2.1 only: the RC bomb car's bot layer for BigBrain (DrakiaXYZ), in its own DLL (BepInEx\plugins\WWC\WWC.BigBrain.dll).
+       RCBombCar.Client.Plugin loads it with Assembly.LoadFrom only when BigBrain is installed, so players without BigBrain never load a
+       type that derives from BigBrain's (inside WWC.Client such a type broke assembly-wide type scans). Not a BepInEx plugin itself.
+       Build after WWC.Client: dotnet build -c Release -p:Forge=true (WWC.Client gives it access to the RC car's internal types). -->
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <AssemblyName>WWC.BigBrain</AssemblyName>
+    <RootNamespace>WWC.BigBrain</RootNamespace>
+    <Version>2.1.0</Version>
+    <DefineConstants>$(DefineConstants);WWC;WWC_FORGE</DefineConstants>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <Deterministic>true</Deterministic>
+    <SptRoot Condition="'$(SptRoot)' == ''">D:\SPT</SptRoot>
+    <ManagedDirectory>$(SptRoot)\EscapeFromTarkov_Data\Managed</ManagedDirectory>
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp" HintPath="$(ManagedDirectory)\Assembly-CSharp.dll" Private="false" />
+    <Reference Include="Comfort" HintPath="$(ManagedDirectory)\Comfort.dll" Private="false" />
+    <Reference Include="Comfort.Unity" HintPath="$(ManagedDirectory)\Comfort.Unity.dll" Private="false" />
+    <Reference Include="CommonExtensions" HintPath="$(ManagedDirectory)\CommonExtensions.dll" Private="false" />
+    <Reference Include="DissonanceVoip" HintPath="$(ManagedDirectory)\DissonanceVoip.dll" Private="false" Condition="Exists('$(ManagedDirectory)\DissonanceVoip.dll')" />
+    <Reference Include="UnityEngine" HintPath="$(ManagedDirectory)\UnityEngine.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(ManagedDirectory)\UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="UnityEngine.PhysicsModule" HintPath="$(ManagedDirectory)\UnityEngine.PhysicsModule.dll" Private="false" />
+    <Reference Include="UnityEngine.AIModule" HintPath="$(ManagedDirectory)\UnityEngine.AIModule.dll" Private="false" />
+    <Reference Include="BepInEx" HintPath="$(SptRoot)\BepInEx\core\BepInEx.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="$(SptRoot)\BepInEx\core\0Harmony.dll" Private="false" />
+    <Reference Include="DrakiaXYZ-BigBrain" HintPath="$(SptRoot)\BepInEx\plugins\DrakiaXYZ-BigBrain.dll" Private="false" />
+    <Reference Include="WWC.Client" HintPath="..\Client\bin\$(Configuration)\WWC.Client.dll" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\RCBombCar\Client\BotLayer.cs" Link="Parts\RCBombCar\BotLayer.cs" />
+  </ItemGroup>
+
+</Project>

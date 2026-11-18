@@ -94,6 +94,7 @@ public sealed class Plugin : BaseUnityPlugin
             }
             _harmony.Patch(AccessTools.Method(typeof(StashItemModel), nameof(StashItemModel.Init)), prefix: new HarmonyMethod(typeof(Plugin), nameof(BeforeStashModel)), postfix: new HarmonyMethod(typeof(Plugin), nameof(OnStashModel)));
             _harmony.Patch(AccessTools.Method(typeof(StashItemModel), nameof(StashItemModel.ConfigureRotationPivotPosition)), postfix: new HarmonyMethod(typeof(Plugin), nameof(CentreOnSpot)));
+            _harmony.Patch(AccessTools.Method(typeof(HideoutAreaStashController), nameof(HideoutAreaStashController.PositionGameObject)), postfix: new HarmonyMethod(typeof(Plugin), nameof(FitToSpot)));
             _harmony.Patch(AccessTools.Method(typeof(LootItem), nameof(LootItem.Init)), postfix: new HarmonyMethod(typeof(Plugin), nameof(OnLootItem)));
             Logger.LogInfo($"{ModName}: ready");
         }
@@ -262,6 +263,151 @@ public sealed class Plugin : BaseUnityPlugin
             }
         }
         catch (Exception ex) { Instance?.Logger.LogError($"{ModName}: pool hook: {ex.Message}"); }
+    }
+
+    // 3. A flag (1.05 x 0.70 m) is bigger than most posters. Where a poster spot has furniture standing out from the wall over part of it
+    //    (the kitchen's range hood and wall shelf at Poster_Kitchen_1, a pile of cloth under Poster_RestSpace_4: WWC trailer, 2026-11-17),
+    //    the flag is shrunk and moved, in small steps, until it clears everything standing out from the wall where it hangs.
+    private static void FitToSpot(StashItemModel model, StashItemModelSpawnPoint spawnPoint)
+    {
+        try
+        {
+            if (Instance is null || model == null || spawnPoint == null) return;
+            var prefab = PrefabOf(model);
+            var cloth = prefab != null ? prefab.transform.Find(MeshObject) : null;
+            if (cloth != null) Instance.Fit(model.transform, cloth, spawnPoint.transform);
+        }
+        catch (Exception ex) { Instance?.Report("fitting a flag to its spot", ex); }
+    }
+
+    private void Fit(Transform model, Transform cloth, Transform spot)
+    {
+        model.localScale = Vector3.one;
+        var filter = cloth.GetComponent<MeshFilter>();
+        if (filter == null || filter.sharedMesh == null) return;
+        var flag = BoxIn(spot, cloth.localToWorldMatrix, filter.sharedMesh.bounds);
+        // The wall: the nearer of the two hits straight out of the flag's middle along the spot's z.
+        var centre = spot.TransformPoint(flag.center);
+        var z = spot.TransformDirection(Vector3.forward).normalized;
+        float back = WallHit(centre, -z, model), front = WallHit(centre, z, model);
+        if (float.IsInfinity(back) && float.IsInfinity(front)) return;
+        float room = back <= front ? 1f : -1f;                       // the room is on the spot's +z when the wall is behind
+        float wallZ = flag.center.z - room * Mathf.Min(back, front);
+        const float reach = 0.35f;
+        var area = new Rect(flag.min.x - reach, flag.min.y - reach, flag.size.x + 2 * reach, flag.size.y + 2 * reach);
+        var mid = new Vector2(flag.center.x, flag.center.y);
+        var blocks = new List<(Rect r, string name)>();
+        bool Ours(Transform t) => t.IsChildOf(model) || t.IsChildOf(spot) || t.GetComponentInParent<Player>() != null;
+        // 1. Solid things: colliders crossing the cloth's own layer (it hangs 35 mm off the wall), found cell by cell over the flag and round
+        //    it. This sees a range hood or a shelf as it is; a box round the whole model (below) would also take in a stove's pipe running
+        //    up the wall behind the flag.
+        const float cell = 0.025f;
+        var layerZ = wallZ + room * 0.035f;
+        var half = new Vector3(cell / 2, cell / 2, 0.01f);
+        for (float y = area.yMin + cell / 2; y < area.yMax; y += cell)
+        {
+            float runStart = float.NaN; string runName = "";
+            for (float x = area.xMin + cell / 2; x < area.xMax + cell; x += cell)
+            {
+                string hitName = "";
+                if (x < area.xMax)
+                    foreach (var col in Physics.OverlapBox(spot.TransformPoint(new Vector3(x, y, layerZ)), half, spot.rotation, ~0, QueryTriggerInteraction.Ignore))
+                        if (col != null && !Ours(col.transform)) { hitName = col.name; break; }
+                if (hitName.Length > 0 && float.IsNaN(runStart)) { runStart = x - cell / 2; runName = hitName; }
+                else if (hitName.Length == 0 && !float.IsNaN(runStart))
+                {
+                    blocks.Add((new Rect(runStart, y - cell / 2, x - cell / 2 - runStart, cell), "collider " + runName));
+                    runStart = float.NaN;
+                }
+            }
+        }
+        // 2. Small things with no collider (a pile of clothes): the box round the model, when it reaches through the cloth's layer. Flat
+        //    things on the wall (signs, other posters, thin pipes) stay behind the cloth, things out in the room (a pot on the stove) only
+        //    in front of it; shadow-only stand-ins and decals (paint cracks: no shadow, a few cm thick) draw nothing it could run into.
+        foreach (var r in FindObjectsOfType<Renderer>())
+        {
+            if (r == null || !r.enabled || !(r is MeshRenderer || r is SkinnedMeshRenderer)) continue;
+            if (r.shadowCastingMode == UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly || IsDecal(r) || Ours(r.transform)) continue;
+            var b = BoxIn(spot, Matrix4x4.identity, r.bounds);
+            float near = room > 0 ? b.min.z - wallZ : wallZ - b.max.z, far = room > 0 ? b.max.z - wallZ : wallZ - b.min.z;
+            if (far < 0.03f || near > 0.045f) continue;
+            if ((r.shadowCastingMode == UnityEngine.Rendering.ShadowCastingMode.Off || Overlay(r)) && far - near < 0.1f) continue;
+            var rect = new Rect(b.min.x, b.min.y, b.size.x, b.size.y);
+            if (!rect.Overlaps(area) || rect.width > 1f || rect.height > 1f || far - near > 0.8f || rect.Contains(mid)) continue;
+            blocks.Add((rect, r.name));
+        }
+        float w = flag.size.x, h = flag.size.y;
+        const float margin = 0.015f, step = 0.01f, shift = 0.25f;
+        var offsets = new List<Vector2>();
+        for (float dx = -shift; dx <= shift + 1e-4f; dx += step)
+            for (float dy = -shift; dy <= shift + 1e-4f; dy += step) offsets.Add(new Vector2(dx, dy));
+        bool Clear(float s, Vector2 d)
+        {
+            var rect = new Rect(mid.x + d.x - s * w / 2 - margin, mid.y + d.y - s * h / 2 - margin, s * w + 2 * margin, s * h + 2 * margin);
+            foreach (var bl in blocks) if (bl.r.Overlaps(rect)) return false;
+            return true;
+        }
+        if (blocks.Count == 0 || Clear(1f, Vector2.zero)) return;
+        // The cheapest change that clears: each 10 % smaller costs as much as 12.5 cm moved, so a flag shrinks a little rather than wander.
+        float bestCost = float.PositiveInfinity, bestS = 1f; var bestD = Vector2.zero;
+        for (float s = 1f; s >= 0.449f; s -= 0.05f)
+            foreach (var d in offsets)
+            {
+                float cost = (1f - s) + 0.8f * d.magnitude;
+                if (cost < bestCost && Clear(s, d)) { bestCost = cost; bestS = s; bestD = d; }
+            }
+        if (!float.IsInfinity(bestCost))
+        {
+            // Scale about the model's own origin, then put the flag's middle where it should go.
+            var origin = model.localPosition;
+            var c = flag.center;
+            model.localScale = Vector3.one * bestS;
+            model.localPosition = c + new Vector3(bestD.x, bestD.y, 0f) - bestS * (c - origin);
+            var hit = blocks.Where(bl => bl.r.Overlaps(new Rect(mid.x - w / 2, mid.y - h / 2, w, h)))
+                .Select(bl => bl.name).Distinct();
+            Logger.LogInfo($"{ModName}: flag on {spot.name}: size {bestS:P0}, moved {bestD.x * 100:0} cm across and {bestD.y * 100:0} cm up, clear of {string.Join(", ", hit)}");
+            return;
+        }
+        Logger.LogInfo($"{ModName}: flag on {spot.name}: no smaller size clears {string.Join(", ", blocks.Select(bl => $"{bl.name} [{bl.r.xMin - mid.x:0.00}..{bl.r.xMax - mid.x:0.00}, {bl.r.yMin - mid.y:0.00}..{bl.r.yMax - mid.y:0.00}]").Distinct())}; left as it is");
+    }
+
+    /// <summary>Every material cut out or see-through (paint cracks, grime, stains laid over a wall).</summary>
+    private static bool Overlay(Renderer r)
+    {
+        var ms = r.sharedMaterials;
+        if (ms == null || ms.Length == 0) return false;
+        foreach (var m in ms) if (m == null || m.renderQueue < 2450) return false;
+        return true;
+    }
+
+    private static bool IsDecal(Renderer r)
+    {
+        foreach (var m in r.sharedMaterials)
+            if (m != null && m.shader != null && m.shader.name.IndexOf("decal", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+        return false;
+    }
+
+    /// <summary>A box (in <paramref name="toWorld"/>'s space) as an axis-aligned box in <paramref name="space"/>'s axes.</summary>
+    private static Bounds BoxIn(Transform space, Matrix4x4 toWorld, Bounds box)
+    {
+        var result = new Bounds();
+        bool first = true;
+        for (int i = 0; i < 8; i++)
+        {
+            var corner = new Vector3((i & 1) == 0 ? box.min.x : box.max.x, (i & 2) == 0 ? box.min.y : box.max.y, (i & 4) == 0 ? box.min.z : box.max.z);
+            var p = space.InverseTransformPoint(toWorld.MultiplyPoint3x4(corner));
+            if (first) { result = new Bounds(p, Vector3.zero); first = false; } else result.Encapsulate(p);
+        }
+        return result;
+    }
+
+    /// <summary>How far the nearest surface (not the flag) is along a ray, up to 30 cm.</summary>
+    private static float WallHit(Vector3 from, Vector3 dir, Transform model)
+    {
+        float best = float.PositiveInfinity;
+        foreach (var hit in Physics.RaycastAll(from, dir, 0.3f, ~0, QueryTriggerInteraction.Ignore))
+            if (hit.collider != null && !hit.collider.transform.IsChildOf(model) && hit.distance < best) best = hit.distance;
+        return best;
     }
 
     // Stock posters use a pivot at the middle of the model; any other item gets one half its height up. Flags are centred like posters.

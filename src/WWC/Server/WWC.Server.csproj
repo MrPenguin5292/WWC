@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <!-- WWC (Wet Works Company) server mod: The Jackal, his quests, the tees, wall flags, patches and the Slickster in one DLL.
        It is built from the parts' own source files (linked, not copied), compiled with WWC defined: each part then skips its own
@@ -28,10 +28,10 @@
     <Deterministic>true</Deterministic>
   </PropertyGroup>
 
-  <!-- Forge build (dotnet build -p:Forge=true): GUID com.mrpenguin5292.wwc, name WWC, version 2.0.1, to match the single client plugin. -->
+  <!-- Forge build (dotnet build -p:Forge=true): GUID com.mrpenguin5292.wwc, name WWC, version 2.1.0, to match the single client plugin. -->
   <PropertyGroup Condition="'$(Forge)' == 'true'">
     <DefineConstants>$(DefineConstants);WWC_FORGE</DefineConstants>
-    <Version>2.0.1</Version>
+    <Version>2.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -60,6 +60,27 @@
     <Compile Include="..\..\Slickster\Server\*.cs" Link="Parts\Slickster\%(Filename)%(Extension)" />
     <!-- WWC Jobs (every WWC line's job chain) -->
     <Compile Include="..\..\WWCJobs\Server\*.cs" Link="Parts\Jobs\%(Filename)%(Extension)" Condition="'$(WithJobs)' == 'true'" />
+  </ItemGroup>
+
+  <!-- Forge build 2.1: the lines folded in from their own mods (linked, built with WWC defined: no metadata of their own, files from Parts.Dir).
+       Their standalone builds are unchanged. -->
+  <ItemGroup Condition="'$(Forge)' == 'true'">
+    <Compile Include="..\..\WWCMags\Server\*.cs" Link="Parts\Mags\%(Filename)%(Extension)" />
+    <Compile Include="..\..\WWCWraps\Server\*.cs" Link="Parts\Wraps\%(Filename)%(Extension)" />
+    <Compile Include="..\..\JackalArmbands\Server\*.cs" Link="Parts\Armbands\%(Filename)%(Extension)" />
+    <Compile Include="..\..\WWCGunDisplays\Server\*.cs" Link="Parts\GunDisplays\%(Filename)%(Extension)" />
+    <Compile Include="..\..\WWCHelmetDisplays\Server\*.cs" Link="Parts\HelmetDisplays\%(Filename)%(Extension)" />
+    <Compile Include="..\..\JackalGunCase\Server\*.cs" Link="Parts\GunCase\%(Filename)%(Extension)" />
+    <Compile Include="..\..\JackalPatchCase\Server\*.cs" Link="Parts\PatchCase\%(Filename)%(Extension)" />
+    <Compile Include="..\..\FTHS\Server\*.cs" Link="Parts\FTHS\%(Filename)%(Extension)" />
+    <Compile Include="..\..\USMCPC\Server\*.cs" Link="Parts\USMCPC\%(Filename)%(Extension)" />
+    <Compile Include="..\..\JPC\Server\*.cs" Link="Parts\JPC\%(Filename)%(Extension)" />
+    <Compile Include="..\..\Airlite\Server\*.cs" Link="Parts\AirLite\%(Filename)%(Extension)" />
+    <Compile Include="..\..\AvonMask\Server\*.cs" Link="Parts\AvonMask\%(Filename)%(Extension)" />
+    <Compile Include="..\..\Grunts\Server\*.cs" Link="Parts\Grunts\%(Filename)%(Extension)" />
+    <Compile Include="..\..\ZynTin\Server\*.cs" Link="Parts\ZynTin\%(Filename)%(Extension)" />
+    <Compile Include="..\..\Vape\Server\*.cs" Link="Parts\Vape\%(Filename)%(Extension)" />
+    <Compile Include="..\..\RCBombCar\Server\*.cs" Link="Parts\RCBombCar\%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

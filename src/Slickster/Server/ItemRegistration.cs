@@ -5,6 +5,7 @@ using SPTarkov.Server.Core.DI;
 using SPTarkov.Server.Core.Helpers.Server;
 using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Models.Enums;
+using SPTarkov.Server.Core.Models.Spt.Config;
 using SPTarkov.Server.Core.Models.Spt.Mod;
 using SPTarkov.Server.Core.Models.Spt.Tables;
 using SPTarkov.Server.Core.Services.Modding.Custom;
@@ -27,7 +28,8 @@ public class ItemRegistration(
     CustomItemService customItemService,
     TemplateTable templateTable,
     GlobalTable globalTable,
-    LocaleTable localeTable) : IOnLoad
+    LocaleTable localeTable,
+    TraderConfig traderConfig) : IOnLoad
 {
     public static readonly List<MongoId> RegisteredIds = [];
 
@@ -133,6 +135,11 @@ public class ItemRegistration(
 
         AddReciprocalConflicts();
         AddLocales(localesDir);
+
+        // audit 2026-11-18 (WWC 2.1): Fence filled his random stock from every template, so he sold the Slickster's own patches.
+        // Collectibles stay off Fence; keep the carrier and its patches off his shelves like the other WWC lines do.
+        traderConfig.Fence.Blacklist.UnionWith(RegisteredIds);
+        logger.Info($"[{ModInfo.Name}] {RegisteredIds.Count} templates kept off Fence");
 
         logger.Success($"[{ModInfo.Name}] registered {RegisteredIds.Count}/{entries.Count} templates");
         return Task.CompletedTask;
