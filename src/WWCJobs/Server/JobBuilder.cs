@@ -7,7 +7,7 @@ using SPTarkov.Server.Core.Utils.Json;
 
 namespace WWCJobs.Server;
 
-internal sealed record Built(Quest Quest, Dictionary<string, string> Text, int Level, List<string> Warnings);
+internal sealed record Built(Quest Quest, Dictionary<string, string> Text, int Level, int Loyalty, List<string> Warnings);
 
 /// <summary>Turns a jobs.json entry into a Jackal quest. Quests are written in the database's own JSON shape and read back through SPT's converters
 /// (the same route as Jackal Origin). Every zone a job names is one the base game's own quests use, so no client mod is needed.</summary>
@@ -45,7 +45,22 @@ internal static class JobBuilder
     private static readonly HashSet<string> KillTargets = new(StringComparer.Ordinal) { "Savage", "AnyPmc", "Any", "Usec", "Bear" };
     private static readonly HashSet<string> BodyParts = new(StringComparer.Ordinal) { "Head", "Chest", "Stomach", "LeftArm", "RightArm", "LeftLeg", "RightLeg" };
 
-    public static Built Build(Job job, int step, int steps, JobsConfig cfg, List<MongoId> requires, List<(MongoId Offer, MongoId Template, int Level)> unlocks, IReadOnlyDictionary<MongoId, TemplateItem> items)
+    /// <summary>
+    /// The Jackal loyalty level a job needs before it can be started (every Jackal quest needs a player level and a Jackal
+    /// loyalty level). "loyalty" in jobs.json, else the highest loyalty level his own table opens at the job's player level, so the gate never
+    /// asks for a level the job itself doesn't. His campaign has no loyalty gate and earns the standing, so no chain can lock itself out.
+    /// </summary>
+    public static int LoyaltyFor(int? wanted, int level, TraderBase trader)
+    {
+        if (wanted is int w) return Math.Clamp(w, 1, 4);
+        var ll = 1;
+        var tiers = trader.LoyaltyLevels ?? [];
+        for (var i = 1; i < tiers.Count && i < 4; i++)
+            if ((tiers[i].MinLevel is { } m ? (int)m : 1) <= level) ll = i + 1;
+        return ll;
+    }
+
+    public static Built Build(Job job, int step, int steps, JobsConfig cfg, List<MongoId> requires, List<(MongoId Offer, MongoId Template, int Level)> unlocks, IReadOnlyDictionary<MongoId, TemplateItem> items, TraderBase jackal)
     {
         var key = job.Id.ToLowerInvariant();
         string Id(string part) => Ids.Of($"job:{key}:{part}").ToString();
@@ -197,9 +212,11 @@ internal static class JobBuilder
         if (markers.Count > 0) started.Insert(0, ItemReward(Id("markers"), markers, Marker, markers.Count));
 
         var level = Math.Max(1, job.Level + cfg.LevelOffset);
+        var loyalty = LoyaltyFor(job.Loyalty, level, jackal);
         var start = new JsonArray
         {
             new JsonObject { ["compareMethod"] = ">=", ["conditionType"] = "Level", ["dynamicLocale"] = false, ["globalQuestCounterId"] = "", ["id"] = Id("level"), ["index"] = 0, ["parentId"] = "", ["value"] = level, ["visibilityConditions"] = new JsonArray() },
+            new JsonObject { ["compareMethod"] = ">=", ["conditionType"] = "TraderLoyalty", ["dynamicLocale"] = false, ["globalQuestCounterId"] = "", ["id"] = Id("loyalty"), ["index"] = 1, ["parentId"] = "", ["target"] = Ids.Jackal, ["value"] = loyalty, ["visibilityConditions"] = new JsonArray() },
         };
         foreach (var r in requires.Distinct())
             start.Add(new JsonObject
@@ -252,7 +269,7 @@ internal static class JobBuilder
         text[$"{questId} acceptPlayerMessage"] = "Alright. I'll handle it.";
         text[$"{questId} completePlayerMessage"] = "Done. It's all there.";
         text[$"{questId} declinePlayerMessage"] = "Not right now.";
-        return new Built(quest.Deserialize<Quest>(JsonOptions)!, text, level, warnings);
+        return new Built(quest.Deserialize<Quest>(JsonOptions)!, text, level, loyalty, warnings);
     }
 
     private static bool IsId(string s) => s.Length == 24 && s.All(Uri.IsHexDigit);

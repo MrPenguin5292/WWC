@@ -23,13 +23,13 @@ public sealed record WwcMetadata : IModMetadata
     public string Name { get; init; } = "WWC";
     public string Author { get; init; } = "Widowz";
     public List<string>? Contributors { get; init; }
-    public SemanticVersioning.Version Version { get; init; } = new("2.0.0");
+    public SemanticVersioning.Version Version { get; init; } = new("2.0.1");
 #else
     public string ModGuid { get; init; } = "local.jackal";
     public string Name { get; init; } = "WWC - Wet Works Company";
     public string Author { get; init; } = "Widowz";
     public List<string>? Contributors { get; init; }
-    public SemanticVersioning.Version Version { get; init; } = new("1.2.2");
+    public SemanticVersioning.Version Version { get; init; } = new("1.2.4");
 #endif
     public SemanticVersioning.Range SptVersion { get; init; } = new("~4.1.6");
     public bool HasPrepatcher { get; init; }

@@ -26,11 +26,11 @@
     <NoWarn>$(NoWarn);CS0618;CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8625;CS8632</NoWarn>
   </PropertyGroup>
 
-  <!-- Forge build (dotnet build -p:Forge=true): one BepInPlugin (ForgePlugin, com.mrpenguin5292.wwc) that starts the three parts, version 2.0.0.
+  <!-- Forge build (dotnet build -p:Forge=true): one BepInPlugin (ForgePlugin, com.mrpenguin5292.wwc) that starts the three parts, version 2.0.1.
        The default build keeps the three plugins and their old GUIDs for the installs other local mods depend on. -->
   <PropertyGroup Condition="'$(Forge)' == 'true'">
     <DefineConstants>$(DefineConstants);WWC_FORGE</DefineConstants>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

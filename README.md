@@ -21,7 +21,7 @@ dotnet build src/WWC/Server/WWC.Server.csproj -c Release -p:Forge=true -p:SptRoo
 dotnet build src/WWC/Client/WWC.Client.csproj -c Release -p:Forge=true -p:SptRoot="C:\path\to\SPT"
 ```
 
-`-p:Forge=true` gives the release build: mod GUID `com.mrpenguin5292.wwc`, one BepInEx plugin, version 2.0.0. The DLLs land in each
+`-p:Forge=true` gives the release build: mod GUID `com.mrpenguin5292.wwc`, one BepInEx plugin, version 2.0.1. The DLLs land in each
 project's `bin\Release` folder. Put `WWC.Server.dll` in `SPT_Runtime\user\mods\Widowz-WWC.Server` and `WWC.Client.dll` in
 `BepInEx\plugins\WWC`, next to the data from the download.
 

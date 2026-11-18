@@ -97,7 +97,21 @@ internal static class BlackDivision
             [new("5c12613b86f7743bbe2c3f76", 2, "Intelligence folders")]),
     ];
 
-    public static IEnumerable<NewQuestDetails> Build(MongoId trader, IEnumerable<string> languages)
+    /// <summary>
+    /// The Jackal loyalty level a job needs before it can be started (every Jackal quest needs a player level and a Jackal
+    /// loyalty level): the highest loyalty level his own table opens at the job's player level, so the gate never asks for a level the job itself
+    /// doesn't. His campaign has no loyalty gate and earns the standing, so the story can't lock itself out.
+    /// </summary>
+    internal static int LoyaltyFor(int level, TraderBase? trader)
+    {
+        var ll = 1;
+        var tiers = trader?.LoyaltyLevels ?? [];
+        for (var i = 1; i < tiers.Count && i < 4; i++)
+            if ((tiers[i].MinLevel is { } m ? (int)m : 1) <= level) ll = i + 1;
+        return ll;
+    }
+
+    public static IEnumerable<NewQuestDetails> Build(MongoId trader, IEnumerable<string> languages, TraderBase? jackal = null)
     {
         var langs = languages.Append("en").Distinct(StringComparer.Ordinal).ToArray();
         for (var i = 0; i < Jobs.Length; i++)
@@ -147,12 +161,17 @@ internal static class BlackDivision
             var start = new List<QuestCondition>
             {
                 new() { Id = Id($"level:{n}"), ConditionType = "Level", CompareMethod = ">=", Value = job.Level, Index = 0, DynamicLocale = false, ParentId = "", GlobalQuestCounterId = "", VisibilityConditions = [] },
+                new()
+                {
+                    Id = Id($"loyalty:{n}"), ConditionType = "TraderLoyalty", CompareMethod = ">=", Value = LoyaltyFor(job.Level, jackal), Target = new ListOrT<string>(null!, trader.ToString()),
+                    Index = 1, DynamicLocale = false, ParentId = "", GlobalQuestCounterId = "", VisibilityConditions = [],
+                },
             };
             if (n > 1)
             {
                 start.Add(new()
                 {
-                    Id = Id($"previous:{n}"), ConditionType = "Quest", Index = 1, Target = new ListOrT<string>(null!, QuestId(n - 1).ToString()), Status = [QuestStatusEnum.Success],
+                    Id = Id($"previous:{n}"), ConditionType = "Quest", Index = 2, Target = new ListOrT<string>(null!, QuestId(n - 1).ToString()), Status = [QuestStatusEnum.Success],
                     AvailableAfter = 0, Dispersion = 0, DynamicLocale = false, ParentId = "", GlobalQuestCounterId = "", VisibilityConditions = [],
                 });
             }
@@ -203,7 +222,7 @@ internal static class BlackDivision
 
 /// <summary>After The Jackal has registered himself: adds the questline. Finishing it opens the shirts for sale (see the offers in Mod.cs).</summary>
 [Injectable(TypePriority = OnLoadOrder.TraderRegistration + 125)]
-public class TeeStory(ISptLogger<TeeStory> logger, ModHelper modHelper, CustomQuestService quests, LocaleTable locales) : IOnLoad
+public class TeeStory(ISptLogger<TeeStory> logger, ModHelper modHelper, CustomQuestService quests, LocaleTable locales, TradersTable traders) : IOnLoad
 {
     public Task OnLoadAsync(CancellationToken cancellationToken)
     {
@@ -211,13 +230,16 @@ public class TeeStory(ISptLogger<TeeStory> logger, ModHelper modHelper, CustomQu
         var cfg = modHelper.GetJsonDataFromFile<TeeConfig>(dir, "config.json") ?? new TeeConfig();
         if (!cfg.Enabled || !cfg.QuestRequired) { logger.Info("[JackalTee] Black Division story is off in config.json"); return Task.CompletedTask; }
         var added = 0;
-        foreach (var quest in BlackDivision.Build(new MongoId(Ids.Jackal), locales.Global.Keys))
+        var gates = new List<string>();
+        foreach (var quest in BlackDivision.Build(new MongoId(Ids.Jackal), locales.Global.Keys, traders.GetTrader(new MongoId(Ids.Jackal))?.Base))
         {
             var result = quests.CreateQuest(quest);
             if (!result.Success) { logger.Error($"[JackalTee] story quest {quest.NewQuest?.QuestName} not added: {string.Join(", ", result.Errors)}"); continue; }
             added++;
+            var start = quest.NewQuest?.Conditions?.AvailableForStart ?? [];
+            gates.Add($"lvl {start.FirstOrDefault(c => c.ConditionType == "Level")?.Value} LL{start.FirstOrDefault(c => c.ConditionType == "TraderLoyalty")?.Value}");
         }
-        logger.Success($"[JackalTee] Black Division story: {added} of {BlackDivision.QuestCount} quests, the last one opens the shirts for sale");
+        logger.Success($"[JackalTee] Black Division story: {added} of {BlackDivision.QuestCount} quests ({string.Join(", ", gates)}), the last one opens the shirts for sale");
         return Task.CompletedTask;
     }
 }

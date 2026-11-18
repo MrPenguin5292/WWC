@@ -94,6 +94,8 @@ public sealed class Job
     [JsonPropertyName("map")] public string Map { get; set; } = "any";
     [JsonPropertyName("icon")] public string Icon { get; set; } = "596b465486f77457ca186188.jpg";
     [JsonPropertyName("level")] public int Level { get; set; } = 1;
+    /// <summary>The Jackal loyalty level needed to start the job (1-4). Left out: the level his loyalty table opens at the job's player level.</summary>
+    [JsonPropertyName("loyalty")] public int? Loyalty { get; set; }
     [JsonPropertyName("xp")] public int Xp { get; set; }
     [JsonPropertyName("roubles")] public int Roubles { get; set; }
     /// <summary>Which of the line's offers this job opens: template _name prefixes, or "=name" for one exact name. The longest match wins;
@@ -259,7 +261,7 @@ public class JobsLoader(ISptLogger<JobsLoader> logger, ModHelper modHelper, Cust
                     if (firstContact is not null && job == first) requires.Add(firstContact.Id);
                     requires.AddRange((job.Requires ?? []).Where(r => added.Contains(r) && !r.Equals(job.Id, StringComparison.OrdinalIgnoreCase)).Select(Ids.Quest));
                     var unlocks = offers.Select(o => (o.Id, o.Template, Level: assort.LoyalLevelItems?.TryGetValue(o.Id, out var ll) == true ? ll : 1)).ToList();
-                    builtChain.Add((JobBuilder.Build(job, i + 1, jobs.Count, cfg, requires, unlocks, templates.Items), offers));
+                    builtChain.Add((JobBuilder.Build(job, i + 1, jobs.Count, cfg, requires, unlocks, templates.Items, jackal.Base), offers));
                 }
             }
             catch (Exception ex) { logger.Error($"{Tag} {line.Name}: a job could not be built, so the line stays on sale: {ex.Message}"); continue; }
@@ -284,7 +286,7 @@ public class JobsLoader(ISptLogger<JobsLoader> logger, ModHelper modHelper, Cust
                     n++;
                 }
                 locked += n;
-                steps.Add($"{built.Quest.QuestName} (lvl {built.Level}{(n > 0 ? $", opens {n}" : "")}{(skipped > 0 ? $", {skipped} locked elsewhere" : "")})");
+                steps.Add($"{built.Quest.QuestName} (lvl {built.Level}, LL{built.Loyalty}{(n > 0 ? $", opens {n}" : "")}{(skipped > 0 ? $", {skipped} locked elsewhere" : "")})");
             }
             report.Add($"{line.Name}: {string.Join(" > ", steps)}");
         }

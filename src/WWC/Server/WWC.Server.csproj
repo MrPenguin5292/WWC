@@ -15,7 +15,7 @@
     <OutputType>Library</OutputType>
     <LangVersion>latest</LangVersion>
     <ModAuthor>Widowz</ModAuthor>
-    <Version>1.2.2</Version>
+    <Version>1.2.4</Version>
     <DefineConstants>$(DefineConstants);WWC</DefineConstants>
     <WithJobs Condition="'$(WithJobs)' == ''">true</WithJobs>
     <DefineConstants Condition="'$(WithJobs)' == 'true'">$(DefineConstants);WWC_JOBS</DefineConstants>
@@ -28,10 +28,10 @@
     <Deterministic>true</Deterministic>
   </PropertyGroup>
 
-  <!-- Forge build (dotnet build -p:Forge=true): GUID com.mrpenguin5292.wwc, name WWC, version 2.0.0, to match the single client plugin. -->
+  <!-- Forge build (dotnet build -p:Forge=true): GUID com.mrpenguin5292.wwc, name WWC, version 2.0.1, to match the single client plugin. -->
   <PropertyGroup Condition="'$(Forge)' == 'true'">
     <DefineConstants>$(DefineConstants);WWC_FORGE</DefineConstants>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
