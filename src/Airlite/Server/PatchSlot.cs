@@ -12,7 +12,7 @@ using SPTarkov.Server.Core.Models.Spt.Tables;
 namespace Airlite.Server;
 
 /// <summary>
-/// His patches fit the rig's front (as on the USMC PC Gen III; in-game text and logs say "patches", never "Jackal patches", Widowz
+/// His patches fit the rig's front (as on the ARC V2; in-game text and logs say "patches", never "Jackal patches", Widowz
 /// 2026-11-16). At Preload + 906 (after the patch wall exists, Preload + 900 range), every id the patch wall's grid takes is added to the
 /// rig's patch slot, which has no patch of its own. Only adds ids; nothing happens when the patch wall is not installed. The client
 /// draws a fitted patch on the fitted front's velcro or pouch face, or on the bare belly panel. 0.3.0 ("Patches on more gear",

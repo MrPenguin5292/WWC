@@ -19,7 +19,7 @@ namespace ZynTin.Server;
 /// <summary>
 /// Widowz 2026-11-17: "Can you have a questline to learn how to make and develop the zyns from therapist and it becomes a buyable and
 /// craftable". Four Therapist quests from db/quests.json (Smoke Break, Fine Print, Pouch Work, Field Trial), built in the database's own JSON
-/// shape and read back through SPT's converters (same route as the USMC PC questline). Pouch Work gives the first two tins; Field Trial puts
+/// shape and read back through SPT's converters (same route as the ARC V2 questline). Pouch Work gives the first two tins; Field Trial puts
 /// the Zyn tins on the shelf (quest assort) and unlocks their Medstation recipes (ProductionScheme rewards matched by each recipe's
 /// QuestComplete requirement). Widowz 03:09 UTC, on Velo and Siberia: "Make them do they are quests after the zyns": two Jackal quests
 /// follow Field Trial, Imported Goods (unlocks Velo) and Minus Eighty (unlocks Siberia); 04:25 UTC Killa: Hard Sell sits between them. A quest's "unlocks" names the brand it opens.

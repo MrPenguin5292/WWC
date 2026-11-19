@@ -12,7 +12,7 @@ using SPTarkov.Server.Core.Models.Spt.Tables;
 namespace JPC.Server;
 
 /// <summary>
-/// Like the USMC PC Gen III (Widowz 2026-11-16): his patches fit the chest (in-game text and logs say "patches", never "Jackal patches", his 03:49 UTC ask). At Preload + 907 (after Jackal Patches has built its patch wall, and
+/// Like the ARC V2 (Widowz 2026-11-16): his patches fit the chest (in-game text and logs say "patches", never "Jackal patches", his 03:49 UTC ask). At Preload + 907 (after Jackal Patches has built its patch wall, and
 /// after the sticker grids at + 900), every id the patch wall's grid takes is added to the carrier's patch slots. Only adds ids; nothing
 /// happens when the patches part is not installed. 0.3.0 ("Patches on more gear", 2026-11-17): the Slickster's own four patches are
 /// let in too (the client now draws them from the Slickster's loose patch meshes), and the new back patch slot takes the same list

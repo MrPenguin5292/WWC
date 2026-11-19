@@ -16,7 +16,7 @@ using UnityEngine;
 namespace JPC.Client;
 
 /// <summary>
-/// JPC plate carrier visuals (the USMC PC Gen III client by way of the USMC AirLite's, mods/USMCPC and mods/Airlite). The carrier clones
+/// JPC plate carrier visuals (the ARC V2 client by way of the USMC AirLite's, mods/USMCPC and mods/Airlite). The carrier clones
 /// the Eagle MMAC's stats but uses the Tasmanian Tiger SK prefab (the Slickster pipeline's donor), so the donor supplies dress, loot model
 /// and behaviour. Every part (fronts, chest pieces, side items, radio, the PECI pouch pairs, the USMC patch on each spot) is a readable
 /// skinned mesh in the donor's bind space; the client copies the parts fitted in the carrier's slots into one mesh per carrier and LOD
@@ -396,7 +396,7 @@ public sealed class Plugin : BaseUnityPlugin
     {
         if (displayMeshes.TryGetValue(part, out var found)) return found;
         var d = parts[part][0];
-        // Part meshes are in the donor's bind space, which is turned against the body (USMC PC run USMCPC_20261116_031410: every part icon
+        // Part meshes are in the donor's bind space, which is turned against the body (ARC V2 run USMCPC_20261116_031410: every part icon
         // showed the part edge-on). Turn them into body axes (x right, y up, z out of the chest) so the front faces the icon and inspect cameras.
         var b = binding.bindBase;
         var rot = new Matrix4x4();

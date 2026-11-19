@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Airlite.Client;
 
-// Shared patch drawing for the USMC PC Gen III, JPC and AirLite clients: the three files are the same apart from the namespace line
+// Shared patch drawing for the ARC V2, JPC and AirLite clients: the three files are the same apart from the namespace line
 // (tools/patchfit/sync_patchdraw.ps1 copies this one into the other two). 2026-11-17 "Patches on more gear".
 
 /// <summary>One place a patch can go on a carrier: its frame in the donor's bind space, its room, and what is under it.</summary>

@@ -11,7 +11,7 @@ using SPTarkov.Server.Core.Models.Spt.Tables;
 namespace Airlite.Server;
 
 /// <summary>
-/// PMC bots wear the rig like the USMC PC Gen III (Widowz picked "PMC bots wearing them" for that one; the AirLite was asked for "like
+/// PMC bots wear the rig like the ARC V2 (Widowz picked "PMC bots wearing them" for that one; the AirLite was asked for "like
 /// the other vests"): usec and bear get it in their tactical-vest pool at the stock Haley Strategic D3CRX's weight (the chest rig it
 /// clones; times config botWeightVsStock), so they wear it over their body armor like any chest rig; the part slots take every front,
 /// side, pocket item, radio and yoke. The patch slot holds only the player's own patches, so bots get none. The part slots get spawn chances
@@ -72,7 +72,7 @@ public class BotLoadouts(
                     foreach (var (slot, chance) in cfg.BotSlotChances)
                         if (!chances.ContainsKey(slot)) { chances[slot] = chance; added++; }
                     // The patch slot holds only the player's own patches. From bot level 15 SPT fills a PMC's TacticalVest slots from the
-                    // template's slot filters ("randomisedArmorSlots", USMC PC Gen III finding 2026-11-16), and a blacklist that empties the
+                    // template's slot filters ("randomisedArmorSlots", ARC V2 finding 2026-11-16), and a blacklist that empties the
                     // slot is undone ("resulted in 0 mods. Reverting to original set"), so its spawn chance is what keeps patches off bots.
                     if (!cfg.BotSlotChances.ContainsKey(PatchSlot.PatchSlotName)) chances[PatchSlot.PatchSlotName] = 0;
                 }

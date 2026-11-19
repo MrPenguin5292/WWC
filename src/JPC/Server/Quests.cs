@@ -20,7 +20,7 @@ using Path = System.IO.Path;
 namespace JPC.Server;
 
 /// <summary>
-/// Widowz 2026-11-16 22:51 UTC: "Give it a questline". Four Jackal quests from db/quests.json, built like the USMC PC Gen III's and the
+/// Widowz 2026-11-16 22:51 UTC: "Give it a questline". Four Jackal quests from db/quests.json, built like the ARC V2's and the
 /// AirLite's questlines (the database's own JSON shape read back through SPT's converters): a Marine cargo drop over Woods that Shturman's
 /// crew dragged to the sawmill. The carrier loadouts unlock with the third quest, the loose parts with the fourth, through The Jackal's
 /// quest assort (config lockBehindQuests). Runs at TraderRegistration + 161, after this mod's own offers (+ 160). The airdrop case's spawn

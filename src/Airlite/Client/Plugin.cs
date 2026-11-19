@@ -16,7 +16,7 @@ using UnityEngine;
 namespace Airlite.Client;
 
 /// <summary>
-/// USMC AirLite rig visuals (the USMC PC Gen III client, mods/USMCPC, adapted). The rig clones the Eagle MMAC's stats but uses the
+/// USMC AirLite rig visuals (the ARC V2 client, mods/USMCPC, adapted). The rig clones the Eagle MMAC's stats but uses the
 /// Tasmanian Tiger SK prefab (the Slickster pipeline's donor), so the donor supplies dress, loot model and behaviour. Every part (fronts,
 /// side pouches, pocket contents, radio, flotation yoke) is a readable skinned mesh in the donor's bind space; the client copies the parts
 /// fitted in the rig's slots into one mesh per rig and LOD (cached by combination, so bots with the same kit share it). A patch in the
@@ -423,7 +423,7 @@ public sealed class Plugin : BaseUnityPlugin
     {
         if (displayMeshes.TryGetValue(part, out var found)) return found;
         var d = parts[part][0];
-        // Part meshes are in the donor's bind space, which is turned against the body (USMC PC run USMCPC_20261116_031410: every part icon
+        // Part meshes are in the donor's bind space, which is turned against the body (ARC V2 run USMCPC_20261116_031410: every part icon
         // showed the part edge-on). Turn them into body axes (x right, y up, z out of the chest) so the front faces the icon and inspect cameras.
         var b = binding.bindBase;
         var rot = new Matrix4x4();

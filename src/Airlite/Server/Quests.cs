@@ -21,7 +21,7 @@ namespace Airlite.Server;
 
 /// <summary>
 /// Widowz 2026-11-16 08:29 UTC: "A Jackal questline that unlocks it. For example: steal a shipment of these flotation rigs off a boat at
-/// the Shoreline pier." Four Jackal quests from db/quests.json, built like the USMC PC Gen III's questline (mods/USMCPC/Server/Quests.cs):
+/// the Shoreline pier." Four Jackal quests from db/quests.json, built like the ARC V2's questline (mods/USMCPC/Server/Quests.cs):
 /// the database's own JSON shape read back through SPT's converters. The rig loadouts unlock with the third quest, the loose parts with the
 /// fourth, through The Jackal's quest assort (config lockBehindQuests). Runs at TraderRegistration + 159, after this mod's own offers
 /// (+ 158). The shipment case's spawn on the Shoreline pier boat is added by <see cref="ShipmentSpawn"/>.

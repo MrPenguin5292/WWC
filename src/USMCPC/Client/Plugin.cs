@@ -32,7 +32,7 @@ public sealed class Plugin : BaseUnityPlugin
 #endif
 {
 #if WWC_FORGE
-    private static readonly BepInEx.Logging.ManualLogSource log = BepInEx.Logging.Logger.CreateLogSource("WWC USMC PC");
+    private static readonly BepInEx.Logging.ManualLogSource log = BepInEx.Logging.Logger.CreateLogSource("WWC ARC V2");
     private BepInEx.Logging.ManualLogSource Logger => log;
     private WWC.Client.PartInfo Info => WWC.Client.ForgePlugin.PartAt("USMCPC");
 #endif

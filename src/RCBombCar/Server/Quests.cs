@@ -21,7 +21,7 @@ namespace RCBombCar.Server;
 
 /// <summary>
 /// Widowz 2026-11-17: "I want a long quest line for it and it's only craftable afterwords". Eight Jackal quests from db/quests.json, built
-/// in the database's own JSON shape and read back through SPT's converters (the Zyn / USMC PC route). Every quest has a level and a Jackal
+/// in the database's own JSON shape and read back through SPT's converters (the Zyn / ARC V2 route). Every quest has a level and a Jackal
 /// loyalty requirement (LL1 below level 10, LL2 from 10, LL3 from 18, LL4 from 25). The last one gives the first car and opens the
 /// Workbench recipe (a ProductionScheme reward matched by the recipe's QuestComplete requirement). Without The Jackal (no WWC) Prapor
 /// gives them so the recipe can still be reached. Runs at TraderRegistration + 179, after the (optional) offer at + 178.

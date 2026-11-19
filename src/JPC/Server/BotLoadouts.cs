@@ -12,7 +12,7 @@ using SPTarkov.Server.Core.Models.Spt.Tables;
 namespace JPC.Server;
 
 /// <summary>
-/// Like the USMC PC Gen III (Widowz 2026-11-16 picked "PMC bots wearing them" there): usec and bear get the carrier in their tactical-vest pool at the stock Eagle MMAC's
+/// Like the ARC V2 (Widowz 2026-11-16 picked "PMC bots wearing them" there): usec and bear get the carrier in their tactical-vest pool at the stock Eagle MMAC's
 /// weight (times config botWeightVsStock). Plates and soft armor come from the bot type's own MMAC pool (the carrier clones its slots);
 /// the part slots take every front, chest piece, side item and radio, and only the USMC patch (kit patches stay a player thing). The part
 /// slots get spawn chances from config botSlotChances where the bot type has none for that slot name yet (custom names, so nothing else
